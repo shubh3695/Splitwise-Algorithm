@@ -75,33 +75,37 @@ public class SplitwiseTransaction {
 
         initializeGraph(totalUsers);
         for (Node sender : sendMoney) {
-            addResolvedDependencies(sender, receiveMoney);
-        }
-    }
-
-    /**
-     * Find if sender and receiver have a feasible mapping
-     *
-     * @param sender
-     * @param receiveMoney
-     */
-    private void addResolvedDependencies(Node sender, Set<Node> receiveMoney) {
-        int give = sender.money;
-        for (Node receiver : receiveMoney) {
-            int receive = receiver.money;
-            if (receive > 0) {
-                if (receive < give) {
-                    receiver.money = 0;
-                    give -= receive;
-                    expenseMap[sender.user].add(new Node(receiver.user, receive));
-                } else {
-                    receiver.money = receive - give;
-                    expenseMap[sender.user].add(new Node(receiver.user, give));
+            for (Node receiver : receiveMoney) {
+                if (addedResolvedDependencies(sender, receiver)) {
                     break;
                 }
             }
         }
+    }
+
+    /**
+     * Find if sender and receiver have a feasible mapping if max money that can
+     * be migrated is done remove this sender and check for others
+     *
+     * @param sender
+     * @param receiveMoney
+     */
+    private boolean addedResolvedDependencies(Node sender, Node receiver) {
+        int give = sender.money;
+        int receive = receiver.money;
+        if (receive > 0) {
+            if (receive < give) {
+                receiver.money = 0;
+                give -= receive;
+                expenseMap[sender.user].add(new Node(receiver.user, receive));
+            } else {
+                receiver.money = receive - give;
+                expenseMap[sender.user].add(new Node(receiver.user, give));
+                return true;
+            }
+        }
         sender.money = give;
+        return false;
     }
 
     /**
@@ -109,10 +113,22 @@ public class SplitwiseTransaction {
      *
      * @param users
      */
-    public void printConnectedComponents(int users) {
-        for (int user = 0; user < users; user++) {
-            for (Node expense : expenseMap[user]) {
-                System.out.println(candidateInfo.getCandidateNamebyId(expense.user) + " owes " + candidateInfo.getCandidateNamebyId(user) + " " + expense.money);
+    public void printConnectedComponents(int users
+    ) {
+        for (int user
+                = 0; user
+                < users;
+                user++) {
+            for (Node expense
+                    : expenseMap[user]) {
+                System.out
+                        .println(candidateInfo
+                                .getCandidateNamebyId(expense.user
+                                ) + " owes " + candidateInfo
+                                        .getCandidateNamebyId(user
+                                        ) + " " + expense.money
+                        );
+
             }
         }
     }
@@ -123,6 +139,10 @@ public class SplitwiseTransaction {
      * @throws IOException
      */
     private void parseExpenses() throws IOException {
+        /*
+         * Consider it a simple JSON mapped object received from 
+         * some source
+         */
         createMappings("A", "B", 100);
         createMappings("A", "C", 50);
         createMappings("A", "C", 500);
@@ -130,20 +150,23 @@ public class SplitwiseTransaction {
         createMappings("B", "C", 200);
         createMappings("C", "A", 250);
         createMappings("C", "B", 200);
+
     }
 
     private void createMappings(String paidBy, String paidFor, int moneyPaid) {
         int u = candidateInfo.getCandidateIdByName(paidBy);
+
         int v = candidateInfo.getCandidateIdByName(paidFor);
         Node node = new Node(v, moneyPaid);
-        expenseMap[u].add(node);
+        expenseMap[u].add(node
+        );
     }
 
     /**
      * private initialiser before the process starts
      */
     private void initialize() {
-        candidateInfo = new CandidateInfo();
+        candidateInfo= new CandidateInfo();
         this.initializeGraph(Constants.MAX_USERS);
     }
 
@@ -153,8 +176,8 @@ public class SplitwiseTransaction {
      * @param total size of users
      */
     private void initializeGraph(int total) {
-        expenseMap = new ArrayList[total];
-        for (int i = 0; i < total; i++) {
+        expenseMap= new ArrayList[total];
+        for (int i= 0; i< total;i++) {
             expenseMap[i] = new ArrayList<>();
         }
     }
