@@ -115,20 +115,9 @@ public class SplitwiseTransaction {
      */
     public void printConnectedComponents(int users
     ) {
-        for (int user
-                = 0; user
-                < users;
-                user++) {
-            for (Node expense
-                    : expenseMap[user]) {
-                System.out
-                        .println(candidateInfo
-                                .getCandidateNamebyId(expense.user
-                                ) + " owes " + candidateInfo
-                                        .getCandidateNamebyId(user
-                                        ) + " " + expense.money
-                        );
-
+        for (int user = 0; user < users; user++) {
+            for (Node expense : expenseMap[user]) {
+                System.out.println(candidateInfo.getCandidateNamebyId(expense.user) + " owes " + candidateInfo.getCandidateNamebyId(user) + " " + expense.money);
             }
         }
     }
@@ -166,7 +155,7 @@ public class SplitwiseTransaction {
      * private initialiser before the process starts
      */
     private void initialize() {
-        candidateInfo= new CandidateInfo();
+        candidateInfo = new CandidateInfo();
         this.initializeGraph(Constants.MAX_USERS);
     }
 
@@ -176,8 +165,8 @@ public class SplitwiseTransaction {
      * @param total size of users
      */
     private void initializeGraph(int total) {
-        expenseMap= new ArrayList[total];
-        for (int i= 0; i< total;i++) {
+        expenseMap = new ArrayList[total];
+        for (int i = 0; i < total; i++) {
             expenseMap[i] = new ArrayList<>();
         }
     }
