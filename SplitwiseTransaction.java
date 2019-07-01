@@ -8,8 +8,10 @@ package splitwise.transaction;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -53,26 +55,26 @@ public class SplitwiseTransaction {
      * @param totalUsers
      */
     public void resolveMultipleConnections(int totalUsers) {
-        HashMap<Integer, Integer> receiveMoney = new HashMap<>();
-        HashMap<Integer, Integer> sendMoney = new HashMap<>();
+        Set<Node> receiveMoney = new HashSet<>();
+        Set<Node> sendMoney = new HashSet<>();
         int[] deltaMoney = new int[totalUsers];
         for (int user = 0; user < totalUsers; user++) {
             for (Node expense : expenseMap[user]) {
                 deltaMoney[user] -= expense.money;
-                deltaMoney[expense.otherUser] += expense.money;
+                deltaMoney[expense.user] += expense.money;
             }
         }
         /* Allocate money to where it belongs and with what corresponding user*/
         for (int i = 0; i < totalUsers; i++) {
             if (deltaMoney[i] < 0) {
-                sendMoney.put(i, Math.abs(deltaMoney[i]));
+                sendMoney.add(new Node(i, Math.abs(deltaMoney[i])));
             } else if (deltaMoney[i] > 0) {
-                receiveMoney.put(i, deltaMoney[i]);
+                receiveMoney.add(new Node(i, deltaMoney[i]));
             }
         }
 
         initializeGraph(totalUsers);
-        for (Map.Entry<Integer, Integer> sender : sendMoney.entrySet()) {
+        for (Node sender : sendMoney) {
             addResolvedDependencies(sender, receiveMoney);
         }
     }
@@ -83,23 +85,23 @@ public class SplitwiseTransaction {
      * @param sender
      * @param receiveMoney
      */
-    private void addResolvedDependencies(Map.Entry<Integer, Integer> sender, Map<Integer, Integer> receiveMoney) {
-        int give = sender.getValue();
-        for (Map.Entry<Integer, Integer> receiver : receiveMoney.entrySet()) {
-            int receive = receiver.getValue();
+    private void addResolvedDependencies(Node sender, Set<Node> receiveMoney) {
+        int give = sender.money;
+        for (Node receiver : receiveMoney) {
+            int receive = receiver.money;
             if (receive > 0) {
                 if (receive < give) {
-                    receiver.setValue(0);
+                    receiver.money = 0;
                     give -= receive;
-                    expenseMap[sender.getKey()].add(new Node(receiver.getKey(), receive));
+                    expenseMap[sender.user].add(new Node(receiver.user, receive));
                 } else {
-                    receiver.setValue(receive - give);
-                    expenseMap[sender.getKey()].add(new Node(receiver.getKey(), give));
+                    receiver.money = receive - give;
+                    expenseMap[sender.user].add(new Node(receiver.user, give));
                     break;
                 }
             }
         }
-        sender.setValue(give);
+        sender.money = give;
     }
 
     /**
@@ -110,7 +112,7 @@ public class SplitwiseTransaction {
     public void printConnectedComponents(int users) {
         for (int user = 0; user < users; user++) {
             for (Node expense : expenseMap[user]) {
-                System.out.println(candidateInfo.getCandidateNamebyId(expense.otherUser) + " owes " + candidateInfo.getCandidateNamebyId(user) + " " + expense.money);
+                System.out.println(candidateInfo.getCandidateNamebyId(expense.user) + " owes " + candidateInfo.getCandidateNamebyId(user) + " " + expense.money);
             }
         }
     }
@@ -165,10 +167,10 @@ public class SplitwiseTransaction {
  */
 class Node {
 
-    int otherUser, money;
+    int user, money;
 
     Node(int v, int wt) {
-        this.otherUser = v;
+        this.user = v;
         this.money = wt;
     }
 }
