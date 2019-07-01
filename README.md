@@ -1,9 +1,9 @@
 # Splitwise-Algorithm
-Simple Java Application Project to minimize redundant cash transactions.
-Simply Download the project. Build dependencies and run SplitwiseAlgorithm main class.
+Simple Java Code to minimize redundant cash transactions.
+Simply Download the file. run SplitwiseTransaction main class.
 
 ## Overview
-1. This project involves a JSON Reader which reads and parses input into a directed graph component. 
+1. This project involves a Java Class which reads and parses input into a directed graph component. 
 2. Each Edge between userA, userB denotes money userA paid for userB.
 3. The directed graph can handle multiple transactions between 2 users.
 
@@ -25,4 +25,4 @@ Simply Download the project. Build dependencies and run SplitwiseAlgorithm main 
 6. This directed graph gives clear picture of how much is owed by whom.
 
 ## Project Dependencies
-1. org.json https://mvnrepository.com/artifact/org.json/json [JAR ADDED]
+None
