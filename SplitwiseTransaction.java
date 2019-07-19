@@ -1,17 +1,9 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
-package splitwise.transaction;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -55,57 +47,52 @@ public class SplitwiseTransaction {
      * @param totalUsers
      */
     public void resolveMultipleConnections(int totalUsers) {
-        Set<Node> receiveMoney = new HashSet<>();
-        Set<Node> sendMoney = new HashSet<>();
         int[] deltaMoney = new int[totalUsers];
         for (int user = 0; user < totalUsers; user++) {
             for (Node expense : expenseMap[user]) {
                 deltaMoney[user] -= expense.money;
-                deltaMoney[expense.user] += expense.money;
+                deltaMoney[expense.otherUser] += expense.money;
             }
         }
+        Map<Integer, Integer> receiveMoney = new HashMap<>();
+        Map<Integer, Integer> sendMoney = new HashMap<>();
         /* Allocate money to where it belongs and with what corresponding user*/
         for (int i = 0; i < totalUsers; i++) {
             if (deltaMoney[i] < 0) {
-                sendMoney.add(new Node(i, Math.abs(deltaMoney[i])));
+                sendMoney.put(i, Math.abs(deltaMoney[i]));
             } else if (deltaMoney[i] > 0) {
-                receiveMoney.add(new Node(i, deltaMoney[i]));
+                receiveMoney.put(i, deltaMoney[i]);
             }
         }
-
         initializeGraph(totalUsers);
-        for (Node sender : sendMoney) {
-            for (Node receiver : receiveMoney) {
-                if (addedResolvedDependencies(sender, receiver)) {
-                    break;
-                }
-            }
+        for (Map.Entry<Integer, Integer> sender : sendMoney.entrySet()) {
+            addResolvedDependencies(sender, receiveMoney);
         }
     }
 
     /**
-     * Find if sender and receiver have a feasible mapping if max money that can
-     * be migrated is done remove this sender and check for others
+     * Find if sender and receiver have a feasible mapping
      *
      * @param sender
      * @param receiveMoney
      */
-    private boolean addedResolvedDependencies(Node sender, Node receiver) {
-        int give = sender.money;
-        int receive = receiver.money;
-        if (receive > 0) {
-            if (receive < give) {
-                receiver.money = 0;
-                give -= receive;
-                expenseMap[sender.user].add(new Node(receiver.user, receive));
-            } else {
-                receiver.money = receive - give;
-                expenseMap[sender.user].add(new Node(receiver.user, give));
-                return true;
+    private void addResolvedDependencies(Map.Entry<Integer, Integer> sender, Map<Integer, Integer> receiveMoney) {
+        int give = sender.getValue();
+        for (Map.Entry<Integer, Integer> receiver : receiveMoney.entrySet()) {
+            int receive = receiver.getValue();
+            if (receive > 0) {
+                if (receive < give) {
+                    receiver.setValue(0);
+                    give -= receive;
+                    expenseMap[sender.getKey()].add(new Node(receiver.getKey(), receive));
+                } else {
+                    receiver.setValue(receive - give);
+                    expenseMap[sender.getKey()].add(new Node(receiver.getKey(), give));
+                    break;
+                }
             }
         }
-        sender.money = give;
-        return false;
+        sender.setValue(give);
     }
 
     /**
@@ -113,13 +100,15 @@ public class SplitwiseTransaction {
      *
      * @param users
      */
-    public void printConnectedComponents(int users
-    ) {
+    public void printConnectedComponents(int users) {
+        int total = 0;
         for (int user = 0; user < users; user++) {
             for (Node expense : expenseMap[user]) {
-                System.out.println(candidateInfo.getCandidateNamebyId(expense.user) + " owes " + candidateInfo.getCandidateNamebyId(user) + " " + expense.money);
+                System.out.println(candidateInfo.getCandidateNamebyId(expense.otherUser) + " owes " + candidateInfo.getCandidateNamebyId(user) + " " + expense.money);
+                total  += 1;
             }
         }
+        System.out.println("Total Transactions required = "+total);
     }
 
     /**
@@ -128,27 +117,50 @@ public class SplitwiseTransaction {
      * @throws IOException
      */
     private void parseExpenses() throws IOException {
-        /*
-         * Consider it a simple JSON mapped object received from 
-         * some source
-         */
-        createMappings("A", "B", 100);
-        createMappings("A", "C", 50);
-        createMappings("A", "C", 500);
-        createMappings("B", "A", 150);
-        createMappings("B", "C", 200);
-        createMappings("C", "A", 250);
-        createMappings("C", "B", 200);
-
+        // createMappings("A", "C", 300);
+        //     createMappings("A", "B", 35);
+        // createMappings("A", "E", 35);
+        // createMappings("A", "F", 35);
+        // createMappings("B", "D", 40);
+        // createMappings("B", "G", 10); 
+        //     createMappings("B", "A", 35);
+        // = 5  (one failing previously)
+        
+        // createMappings("A", "B", 100);
+        // createMappings("A", "C", 50);
+        // createMappings("A", "C", 500);
+        // createMappings("B", "A", 150);
+        // createMappings("B", "C", 200);
+        // createMappings("C", "A", 250);
+        // createMappings("C", "B", 200); 
+        // = 2
+        
+        // createMappings("A", "B", 100);
+        // createMappings("B", "A", 100);
+        // createMappings("A", "C", 500);
+        // createMappings("C", "A", 500);
+        // createMappings("B", "C", 200);
+        // createMappings("C", "B", 200); 
+        // = 0
+    
+        //  createMappings("A", "B", 100);
+        // = 1
+        
+        createMappings("A", "C", 100);
+        createMappings("A", "E", 40);
+            // createMappings("A", "B", 40);
+            // createMappings("B", "C", 40);
+            // createMappings("C", "A", 40);
+        createMappings("A", "F", 30);
+        createMappings("B", "D", 50);
+        // = 4 (one failing previously)
     }
 
     private void createMappings(String paidBy, String paidFor, int moneyPaid) {
         int u = candidateInfo.getCandidateIdByName(paidBy);
-
         int v = candidateInfo.getCandidateIdByName(paidFor);
         Node node = new Node(v, moneyPaid);
-        expenseMap[u].add(node
-        );
+        expenseMap[u].add(node);
     }
 
     /**
@@ -179,10 +191,10 @@ public class SplitwiseTransaction {
  */
 class Node {
 
-    int user, money;
+    int otherUser, money;
 
     Node(int v, int wt) {
-        this.user = v;
+        this.otherUser = v;
         this.money = wt;
     }
 }
